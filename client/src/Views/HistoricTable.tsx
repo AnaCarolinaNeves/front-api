@@ -7,39 +7,36 @@ import excluir from '../Icons/excluir.png';
 import editar from '../Icons/editar.png';
 import Swal from 'sweetalert2';
 import axios from 'axios';
-import index from '../types/index';
+
+
+interface Calls {
+  id: number;
+  callType: string;
+  callTitle: string;
+  callDescription: string;
+  callAttachments: number;
+  callDateCreate: Date;
+};
 
 function HistoricTable() {
+  const [data, setData] = useState<Calls[]>([]);
 
   //axios get
   useEffect(() => {
-    axios.get('http://localhost:3001/call/historic')
-      .then(response => {
-        setData(response.data);
-      })
-      .catch(error => {
-        console.log(error);
-      });
+    async function fetchCalls() {
+      axios.get('http://localhost:3001/call/historic')
+        .then(response => {
+          setData(response.data);
+        })
+        .catch(error => {
+          console.log(error);
+        });
+    }
+    fetchCalls()
   }, []);
 
   //delete
   const handleDelete = (id: number) => {
-
-    // const [formCallId, setFormCallId] = useState<FormCall>();
-
-    // useEffect(() => {
-    //   getFormCallId(IdCall);
-    // }, [IdCall]);
-
-    // async function getFormCallId(IdCall: number) {
-    //   try {
-    //     const response = await axios.get<FormCall>(`http://localhost:3001/call/${IdCall}`);
-    //     setFormCallId(response.data);
-    //   } catch (error) {
-    //     console.error(error);
-    //   }
-    // }
-
     // axios.delete(`http://localhost:3001/call/${IdCall}`)
     //   .then(response => {
     //     // remove the deleted item from the state
@@ -65,9 +62,32 @@ function HistoricTable() {
     //     })
     //   });
   }
+  async function handleDeleteCall(id: number) {
+    try {
+      await axios.delete(`http://localhost:3001/call/delete/${id}`);
+      const updatedCalls = data.filter((call) => call.id !== id);
+      setData(updatedCalls);
+      Swal.fire({
+        title: 'Deletar chamado',
+        text: "Essa ação não pode ser revertida",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sim, deletar'
+      })
+    } 
+    catch (error) {
+      console.error(error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Ocorreu um erro!',
+        text: 'Não foi possível excluir o chamado.',
+      })
+    }
+  }
 
   //sort
-  const [data, setData] = useState<Data[]>([]);
   const [order, setOrder] = useState<"ASC" | "DSC">("ASC");
   const sorting = (col: keyof typeof data[0]) => {
     if (order === "ASC") {
@@ -139,22 +159,22 @@ function HistoricTable() {
               </tr>
             </thead>
             <tbody>
-              {data.slice(pagesVisited, pagesVisited + itemsPerPage).map((item) => {
+              {data.slice(pagesVisited, pagesVisited + itemsPerPage).map((data) => {
                 return (
-                  <tr key={item.id}>
+                  <tr key={data.id}>
                     {/*corpo tabela*/}
                     <td className="text-center">
                       {/*animate*/}
-                      <strong className="dropdown-label" onClick={reveal}>{item.id}</strong>
+                      <strong className="dropdown-label" onClick={reveal}>{data.id}</strong>
                     </td>
-                    <td className="text-center">{item.callType}</td>
-                    <td className="text-center">{item.callTitle}</td>
-                    <td className="text-center">{item.callDescription}</td>
-                    <td className="text-center">{item.callAttachments}</td>
-                    <td className='text-center'>{new Date(item.callDateCreate).toLocaleDateString('en-GB')}</td>
+                    <td className="text-center">{data.callType}</td>
+                    <td className="text-center">{data.callTitle}</td>
+                    <td className="text-center">{data.callDescription}</td>
+                    <td className="text-center">{data.callAttachments}</td>
+                    <td className='text-center'>{new Date(data.callDateCreate).toLocaleDateString('en-GB')}</td>
                     <td className='text-center '>
                       <img style={{ width: '25px' }} src={editar} alt='Editar' />
-                      <img style={{ width: '35px' }} src={excluir} alt='Excluir' onClick={() => handleDelete(item.id)} />
+                      <img style={{ width: '35px' }} src={excluir} alt='Excluir' onClick={() => handleDelete(data.id)} />
                     </td>
                   </tr>
                 )
@@ -195,3 +215,7 @@ function HistoricTable() {
 }
 
 export default HistoricTable;
+
+function then(arg0: (response: any) => void) {
+  throw new Error('Function not implemented.');
+}
