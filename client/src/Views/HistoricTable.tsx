@@ -7,8 +7,6 @@ import excluir from '../Icons/excluir.png';
 import editar from '../Icons/editar.png';
 import Swal from 'sweetalert2';
 import axios from 'axios';
-
-
 interface Calls {
   id: number;
   callType: string;
@@ -20,6 +18,7 @@ interface Calls {
 
 function HistoricTable() {
   const [data, setData] = useState<Calls[]>([]);
+  const [show, setShow] = useState<number | null>(null);
 
   //axios get
   useEffect(() => {
@@ -36,32 +35,6 @@ function HistoricTable() {
   }, []);
 
   //delete
-  const handleDelete = (id: number) => {
-    // axios.delete(`http://localhost:3001/call/${IdCall}`)
-    //   .then(response => {
-    //     // remove the deleted item from the state
-    //     setData(data.filter(item => item.id !== id))
-    //     // show success message
-    //     Swal.fire({
-    //       title: 'Deletar chamado',
-    //       text: "Essa ação não pode ser revertida",
-    //       icon: 'warning',
-    //       showCancelButton: true,
-    //       confirmButtonColor: '#3085d6',
-    //       cancelButtonColor: '#d33',
-    //       confirmButtonText: 'Sim, deletar'
-    //     })
-    //   })
-    //   .catch(error => {
-    //     console.log(error);
-    //     // show error message
-    //     Swal.fire({
-    //       icon: 'error',
-    //       title: 'Ocorreu um erro!',
-    //       text: 'Não foi possível excluir o chamado.',
-    //     })
-    //   });
-  }
   async function handleDeleteCall(id: number) {
     try {
       await axios.delete(`http://localhost:3001/call/delete/${id}`);
@@ -76,7 +49,7 @@ function HistoricTable() {
         cancelButtonColor: '#d33',
         confirmButtonText: 'Sim, deletar'
       })
-    } 
+    }
     catch (error) {
       console.error(error);
       Swal.fire({
@@ -108,7 +81,7 @@ function HistoricTable() {
 
   //pagination
   const [pageNumber, setPageNumber] = useState(0);
-  const itemsPerPage = 5;
+  const itemsPerPage = 3;
   const pagesVisited = pageNumber * itemsPerPage;
   const pageCount = Math.ceil(data.length / itemsPerPage);
   const changePage = ({ selected }: { selected: number }) => {
@@ -116,12 +89,14 @@ function HistoricTable() {
   };
 
   //animate
-  const [show, setShow] = useState(false)
-  const parent = useRef(null)
+  const parent = useRef(null);
   useEffect(() => {
     parent.current && autoAnimate(parent.current)
-  }, [parent])
-  const reveal = () => setShow(!show)
+  }, [parent]);
+
+  const reveal = (id: number) => {
+    setShow(show === id ? null : id);
+  }
 
   return (
     <>
@@ -132,7 +107,7 @@ function HistoricTable() {
             <h1 className='text-center'>Histórico chamado</h1>
           </Row>
         </Container>
-        <Container fluid>
+        <Container >
           <Table bordered hover>
             <thead>
               <tr>
@@ -165,14 +140,14 @@ function HistoricTable() {
                     {/*corpo tabela*/}
                     <td className="text-center">
                       {/*animate*/}
-                      <strong className="dropdown-label" onClick={reveal}>{data.id}</strong>
+                      <strong className="dropdown-label" onClick={() => reveal(data.id)}>{data.id}</strong>
                     </td>
                     <td className="text-center">{data.callType}</td>
                     <td className="text-center">{data.callTitle}</td>
                     <td className="text-center">{data.callDescription}</td>
                     <td className="text-center">{data.callAttachments}</td>
                     <td className='text-center'>{new Date(data.callDateCreate).toLocaleDateString('en-GB')}</td>
-                    <td className='text-center '>
+                    <td className='text-center'>
                       <img style={{ width: '25px' }} src={editar} alt='Editar' />
                       <img style={{ width: '35px' }} src={excluir} alt='Excluir' onClick={() => handleDeleteCall(data.id)} />
                     </td>
@@ -180,42 +155,37 @@ function HistoricTable() {
                 )
               })}
             </tbody>
-            <tfoot>
-              {/*pagination*/}
-              {data.length > itemsPerPage && (
-                <ReactPaginate
-                  previousLabel={<FaChevronLeft />}
-                  nextLabel={<FaChevronRight />}
-                  pageCount={pageCount}
-                  onPageChange={changePage}
-                  containerClassName={'pagination right'}
-                  activeClassName={'active'}
-                />
-              )}
-            </tfoot>
-
+            {/*pagination*/}
+            {data.length > itemsPerPage && (
+              <ReactPaginate
+                previousLabel={<FaChevronLeft />}
+                nextLabel={<FaChevronRight />}
+                pageCount={pageCount}
+                onPageChange={changePage}
+                containerClassName={'pagination right'}
+                activeClassName={'active'}
+              />
+            )}
           </Table>
-          {/*animate*/}
-          {data.map((item) => {
-            return (
-              <div ref={parent} >
-                {
-                  show && <FloatingLabel controlId="floatingLabel" label="Assunto">
+
+        </Container>
+        {/*animate*/}
+        {data.map((item) => {
+          return (
+            <div key={item.id} ref={parent}>
+              {
+                show === item.id && (
+                  <FloatingLabel controlId="floatingLabel" label="Assunto">
                     <Form.Control type="text" defaultValue={item.callDescription} disabled />
                   </FloatingLabel>
-                }
-              </div>
-            )
-          })}
-        </Container>
+                )
+              }
+            </div>
+          )
+        })}
       </Container>
     </>
   )
-
 }
 
 export default HistoricTable;
-
-function then(arg0: (response: any) => void) {
-  throw new Error('Function not implemented.');
-}
