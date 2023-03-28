@@ -19,6 +19,7 @@ interface Calls {
 function HistoricTable() {
   const [data, setData] = useState<Calls[]>([]);
   const [show, setShow] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   //axios get
   useEffect(() => {
@@ -93,10 +94,16 @@ function HistoricTable() {
   useEffect(() => {
     parent.current && autoAnimate(parent.current)
   }, [parent]);
-
   const reveal = (id: number) => {
     setShow(show === id ? null : id);
   }
+
+  //search
+  const filteredData = data.filter((item) =>
+    item.callType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.callTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.callDescription.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <>
@@ -107,7 +114,16 @@ function HistoricTable() {
             <h1 className='text-center'>Histórico chamado</h1>
           </Row>
         </Container>
-        <Container >
+        <Container>
+          <Row className=''>
+            <Form.Control className='px-2 mb-2 pl-2'
+              type="text"
+              placeholder="Search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+            />
+          </Row>
+
           <Table bordered hover>
             <thead>
               <tr>
@@ -134,7 +150,7 @@ function HistoricTable() {
               </tr>
             </thead>
             <tbody>
-              {data.slice(pagesVisited, pagesVisited + itemsPerPage).map((data) => {
+              {filteredData.slice(pagesVisited, pagesVisited + itemsPerPage).map((data) => {
                 return (
                   <tr key={data.id}>
                     {/*corpo tabela*/}
@@ -167,22 +183,21 @@ function HistoricTable() {
               />
             )}
           </Table>
-
+          {/*animate*/}
+          {data.map((item) => {
+            return (
+              <div key={item.id} ref={parent}>
+                {
+                  show === item.id && (
+                    <FloatingLabel controlId="floatingLabel" label="Assunto">
+                      <Form.Control type="text" defaultValue={item.callDescription} disabled />
+                    </FloatingLabel>
+                  )
+                }
+              </div>
+            )
+          })}
         </Container>
-        {/*animate*/}
-        {data.map((item) => {
-          return (
-            <div key={item.id} ref={parent}>
-              {
-                show === item.id && (
-                  <FloatingLabel controlId="floatingLabel" label="Assunto">
-                    <Form.Control type="text" defaultValue={item.callDescription} disabled />
-                  </FloatingLabel>
-                )
-              }
-            </div>
-          )
-        })}
       </Container>
     </>
   )
